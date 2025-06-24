@@ -142,3 +142,21 @@ To add a new provider:
 3. Update the dispatcher to route requests to the new handler when selected.
 
 See the SDD and code comments for more details.
+
+## File Watcher Example
+
+You can watch a directory for file changes using the built-in file watcher:
+
+**Python script example:**
+```python
+from ragms02.watcher.watcher import WatcherConfig, FileWatcher
+
+config = WatcherConfig(path="./my_project")
+watcher = FileWatcher(config)
+watcher.start()
+```
+Or run the watcher directly from the command line:
+```bash
+python src/ragms02/watcher/watcher.py
+```
+This will watch the current directory (`./`) for changes. Edit the script or pass a different path to `WatcherConfig` to watch another directory.
