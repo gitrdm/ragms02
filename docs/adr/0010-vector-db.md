@@ -10,6 +10,7 @@ The system needs to store and search vector embeddings for documents and code. F
 - Use SQLite with a vector extension (e.g., sqlite-vss, sqlite-vector) for local development and solo use.
 - SQLite is lightweight, requires no server, and is easy to set up, back up, and move between environments.
 - The codebase will abstract vector storage so it can be swapped for a scalable solution (e.g., Qdrant, Pinecone, Postgres+pgvector) later if needed.
+- **LangChain** is used to orchestrate chunking, embedding, and retrieval, providing a unified interface for current and future vector DBs.
 
 ## Consequences
 - Fast, simple, and portable for local use.

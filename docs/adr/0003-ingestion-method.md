@@ -24,17 +24,19 @@ For a dynamically evolving codebase, especially one using custom DSLs, timely in
 
 ## Decision
 
-The system will support a **hybrid ingestion workflow**:
+The system will support a **hybrid ingestion workflow** using LangChain for chunking, embedding, and retrieval orchestration:
 
 ### 1. Manual/API-Triggered Full Loads
 - Users can manually trigger full ingestion of a codebase or document set via the REST API or CLI/admin interface.
 - This is intended for onboarding new projects, major refactors, or periodic full re-indexing.
+- **LangChain's text splitters** are used to chunk documents/code into LLM-optimized segments for embedding and storage.
 
 ### 2. Automated Incremental Updates via File-Watcher Sidecar
 - A lightweight "sidecar" file-watcher process runs alongside the codebase (e.g., on the developer's machine or CI server).
 - The watcher monitors specified directories and file patterns for changes (creation, modification, deletion).
 - On detecting changes, the watcher notifies the RAG service by calling its ingestion API, submitting only the changed/affected files or metadata.
 - The sidecar is decoupled from the RAG service, allowing flexibility in deployment (local, containerized, remote).
+- **LangChain** is used to process changed files, chunking and embedding them for vector storage.
 
 ### 3. Extensibility for Other Triggers
 - The architecture leaves room for future integration with git hooks, CI pipelines, or directory polling as needed.
@@ -42,6 +44,7 @@ The system will support a **hybrid ingestion workflow**:
 ## Payload and API Details
 - The ingestion API expects a JSON payload as described in the API Design ADR and SDD, including project EUID, normalized file paths, event types, timestamps, and optionally file UUIDs, content hashes, file content, or storage references.
 - See [ADR-0004 API Design](./0004-api-design.md) and the SDD for full payload schema and examples.
+- **LangChain** orchestrates chunking and embedding for all ingested content.
 
 ## Error Handling and Retries
 - The file-watcher sidecar implements retries with exponential backoff for failed API calls.

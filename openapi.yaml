@@ -3,7 +3,7 @@ info:
   title: RAG LLM Interface Service API
   version: 1.0.0
   description: |
-    REST API for the File-Watcher Sidecar and RAG LLM Interface Service. Supports project/tag isolation, hybrid ingestion, LLM routing, and robust error handling.
+    REST API for the File-Watcher Sidecar and RAG LLM Interface Service. Supports project/tag isolation, hybrid ingestion, LLM routing (Gemini by default, overrideable), and robust error handling.
 servers:
   - url: http://localhost:8000/api/v1
     description: Local development server
@@ -42,13 +42,38 @@ paths:
   /query:
     post:
       summary: Query LLM
-      description: Accepts user queries and returns LLM-augmented responses, grounded in DSL or documentation sources.
+      description: |
+        Accepts user queries and returns LLM-augmented responses, grounded in DSL or documentation sources.
+        
+        **LLM Routing:**
+        - By default, queries are answered using Google Gemini ("gemini-pro").
+        - To use a different provider/model (e.g., Ollama, OpenAI), specify the `model` (and optionally `provider`) field in the request body.
+        - Supported models: `gemini-pro` (default), `llama2` (Ollama), `gpt-3.5-turbo` (OpenAI), etc.
+        - Example: `{ "query": "...", "projects": ["proj1"], "model": "llama2" }` will use Ollama with the "llama2" model.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/QueryRequest'
+            examples:
+              default-gemini:
+                summary: Default (Gemini)
+                value:
+                  query: "What does the add function do?"
+                  projects: ["proj1"]
+              ollama-override:
+                summary: Ollama override
+                value:
+                  query: "What does the add function do?"
+                  projects: ["proj1"]
+                  model: "llama2"
+              openai-override:
+                summary: OpenAI override
+                value:
+                  query: "What does the add function do?"
+                  projects: ["proj1"]
+                  model: "gpt-3.5-turbo"
       responses:
         '200':
           description: Success
@@ -217,6 +242,14 @@ components:
         context:
           type: object
           description: Additional context or parameters
+        model:
+          type: string
+          description: >
+            LLM model to use. Default is "gemini-pro" (Google Gemini). Supported: "gemini-pro", "llama2" (Ollama), "gpt-3.5-turbo" (OpenAI), etc.
+        provider:
+          type: string
+          description: >
+            (Optional) Explicit provider override. Usually inferred from model.
     QueryResponse:
       type: object
       properties:

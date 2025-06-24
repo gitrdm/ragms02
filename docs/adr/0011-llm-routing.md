@@ -11,6 +11,7 @@ The system may use different LLMs (local or cloud) for query augmentation. For s
 - Allow configuration (via environment variable or config file) to select the default LLM backend (local or cloud) and model name/version.
 - Support a per-query flag in the API request to override the default and explicitly route a query to either the local or cloud LLM.
 - The API and client are designed to support future routing logic (e.g., fallback to cloud if local fails, or route by project/query type).
+- **LangChain** is used to manage LLM routing, prompt assembly, and context injection for both local and cloud LLMs, ensuring a unified and extensible RAG pipeline.
 
 ## Consequences
 - Maximizes privacy and cost control for solo/local use.

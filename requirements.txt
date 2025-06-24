@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+watchdog
+sqlite-vss
+requests
+pydantic
+ulid-py
+sphinx
+pytest
+httpx
+black
+flake8
+pytest-cov
+pre-commit
+sphinx-autodoc-typehints

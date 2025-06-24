@@ -9,7 +9,7 @@ All ADRs have been finalized and incorporated. This SDD is up to date, implement
 
 ## Overview
 
-This document describes the architecture and implementation plan for the file-watcher sidecar and its integration with the RAG LLM Interface Service. The system monitors file changes in code repositories and document directories, supports project/tag isolation using EUIDs, and notifies the RAG LLM Interface Service for both full and incremental ingestion. The design is robust for solo/local use but is extensible for future multi-user or production scenarios, supporting hybrid ingestion, flexible API/LLM routing, and secure, observable operations.
+This document describes the architecture and implementation plan for the file-watcher sidecar and its integration with the RAG LLM Interface Service. The system uses **LangChain** as the core RAG pipeline for chunking, retrieval, and LLM context assembly. LangChain enables LLM-optimized chunking, efficient similarity search, and robust context construction for LLM queries. The system monitors file changes in code repositories and document directories, supports project/tag isolation using EUIDs, and notifies the RAG LLM Interface Service for both full and incremental ingestion. The design is robust for solo/local use but is extensible for future multi-user or production scenarios, supporting hybrid ingestion, flexible API/LLM routing, and secure, observable operations.
 
 ---
 
@@ -529,44 +529,12 @@ Example project object:
 
 The following technologies, libraries, and tools are selected for the implementation of the file-watcher sidecar and RAG LLM Interface Service:
 
-- **Programming Language:** Python 3.11+
-  - Chosen for its rich ecosystem, cross-platform support, and ease of integration with ML and data tooling.
-
-- **Dependency & Packaging:**
-  - [Poetry](https://python-poetry.org/) or [PDM](https://pdm.fming.dev/) for dependency management and packaging (pyproject.toml as the source of truth).
-  - [setuptools](https://setuptools.pypa.io/) for build backend.
-
-- **File System Monitoring:** [Watchdog](https://github.com/gorakhargosh/watchdog)
-  - Cross-platform, robust, and actively maintained Python library for monitoring file system events (create, modify, delete, move/rename).
-
-- **API Framework:** [FastAPI](https://fastapi.tiangolo.com/) (preferred) or Flask
-  - FastAPI is modern, async-ready, and provides automatic OpenAPI documentation. Flask is a mature alternative if needed.
-
-- **Vector Database:** SQLite with [sqlite-vss](https://github.com/asg017/sqlite-vss) or [sqlite-vector](https://github.com/keithito/sqlite-vector) extension
-  - Lightweight, serverless, and ideal for local/solo use. The vector extension enables efficient similarity search for embeddings.
-
-- **LLM Integration:**
-  - [Ollama](https://ollama.com/) for local LLM inference (default for privacy and offline use).
-  - Cloud LLMs (e.g., Google Gemini, OpenAI) via HTTP APIs as needed.
-
+- **RAG Pipeline:** [LangChain](https://python.langchain.com/) for chunking, retrieval, and LLM context assembly.
+- **API:** [FastAPI](https://fastapi.tiangolo.com/) for REST endpoints and OpenAPI docs.
+- **File Watching:** [Watchdog](https://pythonhosted.org/watchdog/) for cross-platform file system event monitoring.
+- **Vector Database:** SQLite with [sqlite-vss](https://github.com/asg017/sqlite-vss) or [sqlite-vector](https://github.com/keithito/sqlite-vector) extension, orchestrated by LangChain for local/solo use.
+- **LLM Integration:** [Ollama](https://ollama.com/) for local LLM inference (default for privacy and offline use), with LangChain managing prompt assembly and context injection.
 - **Authentication:** Python standard libraries, with optional [python-jose](https://github.com/mpdavis/python-jose) for JWT if/when bearer token auth is enabled.
-
-- **Configuration:** [PyYAML](https://pyyaml.org/) for YAML config parsing, with environment variable overrides using os.environ.
-
-- **Logging & Observability:** Python standard logging, with optional [structlog](https://www.structlog.org/) for structured logs. Metrics via [Prometheus client](https://github.com/prometheus/client_python) if needed.
-
-- **Testing:** [pytest](https://docs.pytest.org/), [pytest-mock](https://github.com/pytest-dev/pytest-mock) for mocking.
-
-- **Documentation:** [Sphinx](https://www.sphinx-doc.org/) for API and developer docs, with literate docstrings and reStructuredText/Markdown support.
-
-- **Linting & Formatting:** [black](https://github.com/psf/black) for formatting, [flake8](https://github.com/PyCQA/flake8) for linting.
-
-- **Containerization & DevOps:** [Docker](https://www.docker.com/) for packaging and deployment, with a Makefile and one-line install script as described in the deployment ADR.
-
-- **Other:**
-  - [Requests](https://docs.python-requests.org/) for HTTP client functionality.
-  - [ULID-py](https://github.com/mdipierro/ulid) or similar for EUID/ULID generation.
-  - [conda](https://docs.conda.io/) for environment management (optional, for users who prefer conda).
 
 These choices align with the ADRs and ensure the system is robust, extensible, and easy to maintain or migrate for future production scenarios.
 
@@ -584,6 +552,11 @@ These choices align with the ADRs and ensure the system is robust, extensible, a
   - [Sphinx](https://www.sphinx-doc.org/) is used to generate API documentation from docstrings and to build user/developer guides.
   - All modules and functions must have clear, example-driven docstrings. Where appropriate, use Sphinx's reStructuredText or Markdown support for formatting.
   - Documentation is versioned and published alongside releases.
+
+- **Dependency Management:**
+  - Use Poetry for all dependency and environment management. Run `poetry install` to set up the environment and dependencies.
+  - The `pyproject.toml` file is the single source of truth for dependencies. Do not manually edit `requirements.txt`.
+  - For alternative workflows (e.g., conda), use `environment.yml` to create a base environment, then use Poetry for Python dependencies.
 
 - **Testing & CI:**
   - All new features and bugfixes require corresponding unit or integration tests (pytest).

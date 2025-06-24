@@ -9,6 +9,8 @@ The file-watcher sidecar and the RAG LLM Interface Service must communicate effi
 ## Decision
 We will use a RESTful HTTP API for communication between the file-watcher and the RAG LLM Interface Service. REST is widely supported, easy to integrate with many languages, and well-suited for stateless, event-driven notifications. The API will use JSON payloads for compatibility and ease of debugging.
 
+- **LangChain** is used internally to power chunking, retrieval, and context assembly for all RAG endpoints. This ensures LLM-optimized chunking, efficient similarity search, and robust context construction for LLM queries.
+
 - **Endpoints:**
   - `POST /api/v1/ingest/notify` — Receives file change notifications from the file-watcher.
   - `POST /api/v1/query` — Accepts user queries and returns LLM-augmented responses.
