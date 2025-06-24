@@ -1,0 +1,32 @@
+# ADR-0002: Use Lexicographically Sortable EUIDs for Project and Tag Identifiers
+
+## Status
+Accepted
+
+## Context
+Projects and tags must be uniquely identified within the system for document ingestion, vector storage, and retrieval. Human-friendly names might collide, be renamed, or introduce ambiguity. Additionally, having identifiers that are lexicographically sortable by creation time (e.g., ULID, KSUID) enables efficient listing, pagination, and time-based queries without a separate timestamp field.
+
+## Decision
+The system will use lexicographically sortable, globally unique EUIDs (e.g., ULID) as the primary identifier for all projects and tags. Human-readable names will be mapped to EUIDs where necessary (e.g., in the API or UI). EUIDs are URL-safe, sortable by creation time, and easy to use in logs or database keys.
+
+- **EUID Example (ULID):**
+  `01HZY6QK7ZJ8X4Q2K7Q2K7Q2K7`  // Encodes timestamp, sorts by creation order
+
+## Consequences
+- Eliminates ambiguity and collision risks.
+- Enables efficient sorting, pagination, and time-based queries.
+- API/UX must handle mapping between names and EUIDs.
+- Slightly more complexity when referencing projects/tags by humans.
+
+## Implementation Notes
+- EUIDs can be generated in a decentralized manner (no central authority required).
+- The API should provide endpoints to resolve human-friendly names to EUIDs and vice versa.
+- This approach supports future features like renaming projects/tags without breaking references.
+
+## Example
+```json
+{
+  "id": "01HZY6QK7ZJ8X4Q2K7Q2K7Q2K7",
+  "name": "my-dsl-project"
+}
+```

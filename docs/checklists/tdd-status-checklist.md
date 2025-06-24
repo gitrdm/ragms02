@@ -1,0 +1,4 @@
+- [ ] Status section filled out
+- [ ] Dependencies listed
+- [ ] Linked in PROJECT_STATUS.md
+- [ ] All stakeholders assigned/reviewed

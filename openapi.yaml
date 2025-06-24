@@ -1,0 +1,280 @@
+openapi: 3.0.3
+info:
+  title: RAG LLM Interface Service API
+  version: 1.0.0
+  description: |
+    REST API for the File-Watcher Sidecar and RAG LLM Interface Service. Supports project/tag isolation, hybrid ingestion, LLM routing, and robust error handling.
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+paths:
+  /ingest/notify:
+    post:
+      summary: Notify file changes
+      description: Receives batched file change notifications from the file-watcher sidecar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestNotifyRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+  /query:
+    post:
+      summary: Query LLM
+      description: Accepts user queries and returns LLM-augmented responses, grounded in DSL or documentation sources.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueryRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+  /admin/reset:
+    post:
+      summary: Reset vector database/index
+      description: Resets or clears the vector database/index (admin only).
+      responses:
+        '200':
+          description: Reset success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+  /admin/reindex:
+    post:
+      summary: Reindex project
+      description: Triggers a full re-ingestion and re-indexing for a project (admin only).
+      responses:
+        '200':
+          description: Reindexing started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusResponse'
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+  /health:
+    get:
+      summary: Health check
+      description: Returns service health status.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /status:
+    get:
+      summary: Service status
+      description: Returns current status and statistics.
+      responses:
+        '200':
+          description: Service status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusDetailResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    IngestNotifyRequest:
+      type: object
+      required: [project_id, events]
+      properties:
+        project_id:
+          type: string
+          description: Project EUID
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileEvent'
+    FileEvent:
+      type: object
+      required: [path, event_type, timestamp]
+      properties:
+        path:
+          type: string
+          description: Project-root-relative file path
+        event_type:
+          type: string
+          enum: [created, modified, deleted, moved]
+        timestamp:
+          type: string
+          format: date-time
+        uuid:
+          type: string
+          description: Optional stable file UUID
+        hash:
+          type: string
+          description: Optional content hash
+        content:
+          type: string
+          description: Optional file content (base64 or text)
+        storage_url:
+          type: string
+          description: Optional reference to file in shared storage
+        old_path:
+          type: string
+          description: For moved/renamed events
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        message:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        error:
+          type: string
+    QueryRequest:
+      type: object
+      required: [query, projects]
+      properties:
+        query:
+          type: string
+        projects:
+          type: array
+          items:
+            type: string
+        context:
+          type: object
+          description: Additional context or parameters
+    QueryResponse:
+      type: object
+      properties:
+        response:
+          type: string
+        sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceSnippet'
+        citations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Citation'
+        confidence:
+          type: number
+        error:
+          type: string
+    SourceSnippet:
+      type: object
+      properties:
+        path:
+          type: string
+        snippet:
+          type: string
+        score:
+          type: number
+    Citation:
+      type: object
+      properties:
+        id:
+          type: integer
+        path:
+          type: string
+        offset:
+          type: array
+          items:
+            type: integer
+          minItems: 2
+          maxItems: 2
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        uptime:
+          type: integer
+        version:
+          type: string
+    StatusDetailResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        projects:
+          type: integer
+        documents_indexed:
+          type: integer
+        last_ingest:
+          type: string
+          format: date-time
