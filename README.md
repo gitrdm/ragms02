@@ -218,7 +218,7 @@ This project supports robust, consistent file/directory exclusion for both the f
    - The `examples/bulk_ingest.py` script automatically loads `.ragignore` and skips ignored files/directories.
 
 3. **File Watcher:**
-   - The `examples/watch_with_ragignore.py` script demonstrates using the same ignore logic for real-time event filtering.
+   - The `examples/watch_with_ragignore.py` and `examples/watch_exclude_examples_dir.py` scripts both demonstrate using the same ignore logic for real-time event filtering, powered by `.ragignore`.
 
 4. **Custom Patterns:**
    - Add any additional patterns to `.ragignore` to exclude them from both ingestion and watching.
@@ -233,8 +233,9 @@ __pycache__/
 ```
 
 ### Implementation Details
-- Ignore logic is implemented in `examples/ignore_utils.py` using the `pathspec` library.
-- Both watcher and bulk ingest scripts should import and use this utility for consistent behavior.
+- Ignore logic is implemented in `ignore_utils.py` (used by all watcher and ingestion scripts) using the `pathspec` library.
+- All watcher and bulk ingest scripts import and use this utility for consistent behavior.
+- The watcher will reload `.ragignore` on changes and emit delete events for files newly ignored.
 
 **Note:** Install `pathspec` if needed:
 ```bash

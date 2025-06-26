@@ -36,8 +36,9 @@ File/Directory Exclusion and Ignore Patterns
 
 The system supports robust exclusion of files and directories from ingestion and watching using a shared `.ragignore` file (gitignore-style). See the SDD and usage documentation for details on how to configure and use this feature for both real-time and batch ingestion.
 
-- See `examples/ignore_utils.py` for the shared ignore logic.
+- See `ignore_utils.py` for the shared ignore logic.
 - See `examples/watch_with_ragignore.py` for a watcher example using `.ragignore`.
 - See `examples/bulk_ingest.py` for a bulk ingestion example using `.ragignore`.
+- See `examples/watch_exclude_examples_dir.py` for a watcher example using `.ragignore` for directory exclusion.
 
 ---

@@ -1,24 +1,29 @@
 """
-Example: Watch a project directory for changes, excluding the 'examples' directory.
+Example: Watch a project directory for changes, using .ragignore for exclusion.
 
 This script demonstrates how to use the Watchdog-based file watcher from this project
-and exclude a specific directory (here, './examples') from being watched/ingested.
-
-You can adapt the ignore logic for other patterns or directories as needed.
+and exclude files/directories based on patterns in .ragignore, ensuring consistency
+with bulk ingestion and other watcher examples.
 """
+import os
 import time
 from watchdog.observers import Observer
-from watchdog.events import PatternMatchingEventHandler
+from watchdog.events import FileSystemEventHandler
+from ignore_utils import load_ignore_patterns, is_ignored
 
 WATCH_PATH = "./my_project"  # Change to your project directory
-EXCLUDE_DIR = "examples"
+RAGIGNORE_PATH = os.path.join(WATCH_PATH, ".ragignore")
 
-# Ignore all files and subdirectories under './examples/'
-ignore_patterns = [f"{WATCH_PATH}/{EXCLUDE_DIR}/*"]
+spec = load_ignore_patterns(RAGIGNORE_PATH)
 
-class ExcludeExamplesHandler(PatternMatchingEventHandler):
-    def __init__(self):
-        super().__init__(ignore_patterns=ignore_patterns, ignore_directories=False)
+class RagignoreHandler(FileSystemEventHandler):
+    def dispatch(self, event):
+        # Only handle file/directory events not ignored by .ragignore
+        src_path = str(event.src_path)
+        rel_path = os.path.relpath(os.path.abspath(src_path), os.path.abspath(WATCH_PATH))
+        if is_ignored(rel_path, spec):
+            return
+        super().dispatch(event)
 
     def on_created(self, event):
         print(f"Created: {event.src_path}")
@@ -34,10 +39,10 @@ class ExcludeExamplesHandler(PatternMatchingEventHandler):
 
 if __name__ == "__main__":
     observer = Observer()
-    handler = ExcludeExamplesHandler()
+    handler = RagignoreHandler()
     observer.schedule(handler, path=WATCH_PATH, recursive=True)
     observer.start()
-    print(f"Watching '{WATCH_PATH}' (excluding '{EXCLUDE_DIR}/') for changes. Press Ctrl+C to stop.")
+    print(f"Watching '{WATCH_PATH}' (excluding patterns in .ragignore). Press Ctrl+C to stop.")
     try:
         while True:
             time.sleep(1)

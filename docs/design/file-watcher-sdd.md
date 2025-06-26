@@ -584,8 +584,9 @@ The file-watcher sidecar and bulk ingestion scripts both support robust exclusio
   - Familiar syntax for users (inherits from `.gitignore`).
 
 - **See also:**
-  - `examples/ignore_utils.py` for the shared ignore logic.
+  - `ignore_utils.py` for the shared ignore logic.
   - `examples/watch_with_ragignore.py` for a watcher example using `.ragignore`.
   - `examples/bulk_ingest.py` for a bulk ingestion example using `.ragignore`.
+  - `examples/watch_exclude_examples_dir.py` for a watcher example using `.ragignore` for directory exclusion.
 
 ---

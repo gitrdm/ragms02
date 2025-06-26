@@ -36,7 +36,7 @@ The file-watcher sidecar and bulk ingestion scripts both support robust exclusio
 - Bulk ingestion scripts also load `.ragignore` and skip ignored files/directories during recursive scans.
 - Patterns can be customized to exclude any files, directories, or file types as needed.
 
-See `examples/ignore_utils.py` and `examples/watch_with_ragignore.py` for implementation details.
+See `ignore_utils.py`, `examples/watch_with_ragignore.py`, `examples/bulk_ingest.py`, and `examples/watch_exclude_examples_dir.py` for implementation details and usage examples.
 
 ## References
 - [Watchdog Python](https://github.com/gorakhargosh/watchdog)
