@@ -1,4 +1,8 @@
+[![Docs](https://img.shields.io/badge/docs-online-blue)](https://gitrdm.github.io/ragms02/)
+
 # RAG LLM Interface Service & File-Watcher Sidecar
+
+[📖 Project Documentation](https://gitrdm.github.io/ragms02/)
 
 ## Overview
 This project was created to experiment with enhancing the effectiveness of using an LLM as a coding assistant by implementing the project using a more formal, structured design methodology, including use of Architecture Decision Records (ADRs) and a System Design Document (SDD). Given the goals of the project, the source code is almost entirely LLM generated, with minimal human edits. As such, the code may not be fit for production use or suitable for any purpose, but serves as a proof of concept of using an LLM as the main contributor to a code base. 
