@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ragms02.api.admin &#8212; RAG LLM Interface Service &amp; File-Watcher Sidecar 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ragms02.api.admin</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragms02.vectorstore.langchain_sqlite</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQLiteLangChainVectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+<div class="viewcode-block" id="admin_reset">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.admin_reset">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reset&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">admin_reset</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Reset/clear the vector database/index (admin only).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Status and message.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; admin_reset()</span>
+<span class="sd">        {&#39;status&#39;: &#39;reset&#39;, &#39;message&#39;: &#39;Database/index has been cleared.&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RAGMS02_VECTOR_DB&quot;</span><span class="p">,</span> <span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SQLiteLangChainVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM vectors&quot;</span><span class="p">)</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Database/index has been cleared.&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="admin_reindex">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.admin_reindex">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/admin/reindex&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">admin_reindex</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Trigger a full re-ingestion and re-indexing for a project (admin only).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Status and message.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; admin_reindex()</span>
+<span class="sd">        {&#39;status&#39;: &#39;reindexing&#39;, &#39;message&#39;: &#39;Reindexing started for project.&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Placeholder: In a real system, this would trigger a background job or workflow</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;reindexing&quot;</span><span class="p">,</span> <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Reindexing started for project.&quot;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="status">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.status">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/status&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">status</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Returns current status and statistics.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Status, project count, document count, and last ingest time.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; status()</span>
+<span class="sd">        {&#39;status&#39;: &#39;ok&#39;, &#39;projects&#39;: 1, &#39;documents_indexed&#39;: 10, &#39;last_ingest&#39;: &#39;...&#39;}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RAGMS02_VECTOR_DB&quot;</span><span class="p">,</span> <span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SQLiteLangChainVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(DISTINCT project_id), COUNT(*) FROM vectors&quot;</span><span class="p">)</span>
+    <span class="n">projects</span><span class="p">,</span> <span class="n">documents_indexed</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT MAX(rowid) FROM vectors&quot;</span><span class="p">)</span>
+    <span class="n">last_ingest</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;Z&quot;</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;ok&quot;</span><span class="p">,</span> <span class="s2">&quot;projects&quot;</span><span class="p">:</span> <span class="n">projects</span><span class="p">,</span> <span class="s2">&quot;documents_indexed&quot;</span><span class="p">:</span> <span class="n">documents_indexed</span><span class="p">,</span> <span class="s2">&quot;last_ingest&quot;</span><span class="p">:</span> <span class="n">last_ingest</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="list_projects">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.list_projects">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/projects&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_projects</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Lists all known projects.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: List of projects and document counts.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; list_projects()</span>
+<span class="sd">        {&#39;projects&#39;: [{&#39;id&#39;: &#39;proj1&#39;, &#39;documents&#39;: 5}]}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RAGMS02_VECTOR_DB&quot;</span><span class="p">,</span> <span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SQLiteLangChainVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT project_id, COUNT(*) FROM vectors GROUP BY project_id&quot;</span><span class="p">)</span>
+    <span class="n">projects</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;documents&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">]</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;projects&quot;</span><span class="p">:</span> <span class="n">projects</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="list_project_sources">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.list_project_sources">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/projects/</span><span class="si">{project_id}</span><span class="s2">/sources&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_project_sources</span><span class="p">(</span><span class="n">project_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="o">...</span><span class="p">)):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Lists all source files/documents for a project.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        project_id (str): Project identifier.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: List of sources with path and snippet.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; list_project_sources(&quot;proj1&quot;)</span>
+<span class="sd">        {&#39;sources&#39;: [{&#39;path&#39;: &#39;file1.txt&#39;, &#39;snippet&#39;: &#39;...&#39;}]}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RAGMS02_VECTOR_DB&quot;</span><span class="p">,</span> <span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SQLiteLangChainVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id, content FROM vectors WHERE project_id=?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">project_id</span><span class="p">,))</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;snippet&quot;</span><span class="p">:</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">][:</span><span class="mi">100</span><span class="p">]}</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cur</span><span class="p">]</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;sources&quot;</span><span class="p">:</span> <span class="n">sources</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="get_logs">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.get_logs">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/logs&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_logs</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Returns recent logs (admin only). Placeholder implementation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: List of log entries.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; get_logs()</span>
+<span class="sd">        {&#39;logs&#39;: [{&#39;timestamp&#39;: &#39;...&#39;, &#39;level&#39;: &#39;INFO&#39;, &#39;message&#39;: &#39;Ingested file ...&#39;}]}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># In a real system, fetch from a log store or file</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;logs&quot;</span><span class="p">:</span> <span class="p">[{</span><span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;level&quot;</span><span class="p">:</span> <span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Ingested file src/grammar.dsl&quot;</span><span class="p">}]}</span></div>
+
+
+<div class="viewcode-block" id="get_metrics">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.admin.get_metrics">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/metrics&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_metrics</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Returns service metrics. Placeholder implementation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Metrics summary.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; get_metrics()</span>
+<span class="sd">        {&#39;metrics&#39;: {&#39;queries&#39;: 100, &#39;ingest_events&#39;: 50, &#39;errors&#39;: 2}}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;queries&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;ingest_events&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span> <span class="s2">&quot;errors&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}}</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">RAG LLM Interface Service & File-Watcher Sidecar</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/file-watcher-sdd.html">System Design Document: File-Watcher Sidecar and RAG LLM Interface Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../adr/index.html">ADR Index</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Your Name.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ragms02.api.query &#8212; RAG LLM Interface Service &amp; File-Watcher Sidecar 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css?v=12dfc556" />
+    <script src="../../../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for ragms02.api.query</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">APIRouter</span><span class="p">,</span> <span class="n">HTTPException</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragms02.llm.dispatcher</span><span class="w"> </span><span class="kn">import</span> <span class="n">dispatch_llm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragms02.vectorstore.sqlite</span><span class="w"> </span><span class="kn">import</span> <span class="n">VectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragms02.vectorstore.embedding</span><span class="w"> </span><span class="kn">import</span> <span class="n">embed_text</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ragms02.vectorstore.langchain_sqlite</span><span class="w"> </span><span class="kn">import</span> <span class="n">SQLiteLangChainVectorStore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain.schema</span><span class="w"> </span><span class="kn">import</span> <span class="n">Document</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">router</span> <span class="o">=</span> <span class="n">APIRouter</span><span class="p">()</span>
+
+<div class="viewcode-block" id="QueryRequest">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.query.QueryRequest">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QueryRequest</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Request payload for /query endpoint.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        query (str): User&#39;s question or prompt.</span>
+<span class="sd">        projects (List[str]): List of project IDs to search.</span>
+<span class="sd">        context (Optional[Dict[str, Any]]): Additional context or parameters.</span>
+<span class="sd">        model (Optional[str]): LLM model to use.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; QueryRequest(query=&quot;What is RAG?&quot;, projects=[&quot;proj1&quot;])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">query</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">projects</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="n">context</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;llama2&quot;</span></div>
+
+
+<div class="viewcode-block" id="QueryResponse">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.query.QueryResponse">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QueryResponse</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Response model for /query endpoint.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        response (str): LLM answer.</span>
+<span class="sd">        sources (Optional[List[Dict[str, Any]]]): Supporting sources.</span>
+<span class="sd">        citations (Optional[List[Dict[str, Any]]]): Inline mapping of answer segments to sources.</span>
+<span class="sd">        confidence (Optional[float]): LLM&#39;s confidence in the answer.</span>
+<span class="sd">        error (Optional[str]): Error or fallback message.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; QueryResponse(response=&quot;RAG stands for...&quot;, sources=[{&quot;id&quot;: &quot;doc1&quot;}])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">response</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sources</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">citations</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">confidence</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">error</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="query_llm">
+<a class="viewcode-back" href="../../../index.html#ragms02.api.query.query_llm">[docs]</a>
+<span class="nd">@router</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/query&quot;</span><span class="p">,</span> <span class="n">response_model</span><span class="o">=</span><span class="n">QueryResponse</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">query_llm</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="n">QueryRequest</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    .. :no-index:</span>
+
+<span class="sd">    Retrieve similar docs using LangChain vector store and assemble context for LLM.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        payload (QueryRequest): Query request payload (see :class:`QueryRequest`).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        QueryResponse: LLM response and supporting sources (see :class:`QueryResponse`).</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">        &gt;&gt;&gt; req = QueryRequest(query=&quot;What is RAG?&quot;, projects=[&quot;proj1&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; query_llm(req)</span>
+<span class="sd">        QueryResponse(response=&quot;RAG stands for...&quot;, sources=[...])</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">db_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;RAGMS02_VECTOR_DB&quot;</span><span class="p">,</span> <span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="n">SQLiteLangChainVectorStore</span><span class="p">(</span><span class="n">db_path</span><span class="p">)</span>
+    <span class="n">project_id</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">projects</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">payload</span><span class="o">.</span><span class="n">projects</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">sources</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">context_chunks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">project_id</span><span class="p">:</span>
+        <span class="n">query_emb</span> <span class="o">=</span> <span class="n">embed_text</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+        <span class="n">docs</span> <span class="o">=</span> <span class="n">store</span><span class="o">.</span><span class="n">similarity_search</span><span class="p">(</span>
+            <span class="n">query</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>  <span class="c1"># not used, expects embedding in filter</span>
+            <span class="n">k</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="nb">filter</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;embedding&quot;</span><span class="p">:</span> <span class="n">query_emb</span><span class="p">,</span> <span class="s2">&quot;project_id&quot;</span><span class="p">:</span> <span class="n">project_id</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[DEBUG] Retrieved docs:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[DEBUG] id: </span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">, score: </span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;score&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">, snippet: </span><span class="si">{</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">doc</span> <span class="ow">in</span> <span class="n">docs</span><span class="p">:</span>
+            <span class="n">sources</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">),</span> <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">),</span> <span class="s2">&quot;snippet&quot;</span><span class="p">:</span> <span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">})</span>
+            <span class="n">context_chunks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">page_content</span><span class="p">)</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context_chunks</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">llm_response</span> <span class="o">=</span> <span class="n">dispatch_llm</span><span class="p">(</span>
+            <span class="n">payload</span><span class="o">.</span><span class="n">query</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Context:</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">context</span><span class="p">,</span>
+            <span class="n">context</span><span class="o">=</span><span class="n">context_chunks</span><span class="p">,</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">payload</span><span class="o">.</span><span class="n">model</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">QueryResponse</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="n">llm_response</span><span class="p">,</span> <span class="n">sources</span><span class="o">=</span><span class="n">sources</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">QueryResponse</span><span class="p">(</span><span class="n">response</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">RAG LLM Interface Service & File-Watcher Sidecar</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../design/file-watcher-sdd.html">System Design Document: File-Watcher Sidecar and RAG LLM Interface Service</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../adr/index.html">ADR Index</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Your Name.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

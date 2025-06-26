@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ADR-0007: Error Handling &#8212; RAG LLM Interface Service &amp; File-Watcher Sidecar 0.1.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=12dfc556" />
+    <script src="../_static/documentation_options.js?v=01f34227"></script>
+    <script src="../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ADR-0008: Deployment" href="0008-deployment.html" />
+    <link rel="prev" title="ADR-0006: File Change Detection" href="0006-file-change-detection.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="adr-0007-error-handling">
+<h1>ADR-0007: Error Handling<a class="headerlink" href="#adr-0007-error-handling" title="Link to this heading">¶</a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link to this heading">¶</a></h2>
+<p>Accepted</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Link to this heading">¶</a></h2>
+<p>(Describe the context for error handling, e.g., need for robust API, retries, etc.)</p>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Link to this heading">¶</a></h2>
+<p>(Describe the error handling approach, e.g., error codes, retries, logging, etc.)</p>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading">¶</a></h2>
+<p>(Describe the impact of this decision, e.g., reliability, observability, etc.)</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">RAG LLM Interface Service & File-Watcher Sidecar</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../design/file-watcher-sdd.html">System Design Document: File-Watcher Sidecar and RAG LLM Interface Service</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ADR Index</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="0003-ingestion-method.html">ADR-0003: Document and Code Ingestion Method</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0004-api-design.html">ADR-0004: API Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0005-authentication.html">ADR-0005: Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0006-file-change-detection.html">ADR-0006: File Change Detection</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">ADR-0007: Error Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0008-deployment.html">ADR-0008: Deployment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0009-observability.html">ADR-0009: Observability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0010-vector-db.html">ADR-0010: Vector Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0011-llm-routing.html">ADR-0011: LLM Routing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0012-security.html">ADR-0012: Security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0013-project-tagging.html">ADR-0013: Project Tagging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="0014-initial-load.html">ADR-0014: Initial Load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="9999-decision-backlog.html">ADR-9999: Decision Backlog</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">ADR Index</a><ul>
+      <li>Previous: <a href="0006-file-change-detection.html" title="previous chapter">ADR-0006: File Change Detection</a></li>
+      <li>Next: <a href="0008-deployment.html" title="next chapter">ADR-0008: Deployment</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Your Name.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="../_sources/adr/0007-error-handling.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
