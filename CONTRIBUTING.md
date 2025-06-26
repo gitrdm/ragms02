@@ -33,7 +33,10 @@ Thank you for your interest in contributing! This document outlines the process 
 
 ## Community Standards
 - Be respectful and constructive in all communications.
-- Follow the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/).
+- Follow the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Changelog
+- For new features or significant fixes, add an entry to `CHANGELOG.md` in your pull request, summarizing your change under the next unreleased version (or current version if appropriate).
 
 ---
 
