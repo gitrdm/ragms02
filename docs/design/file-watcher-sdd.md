@@ -274,11 +274,11 @@ api:
 
 ## References
 
-- [openapi.yaml](../openapi.yaml) — Canonical OpenAPI (Swagger) specification for all API endpoints, schemas, and error formats.
-- [ADR-0003 Ingestion Method](./0003-ingestion-method.md)
-- [ADR-9999 Decision Backlog](./9999-decision-backlog.md)
+- [openapi.yaml](../../openapi.yaml) — Canonical OpenAPI (Swagger) specification for all API endpoints, schemas, and error formats.
+- [ADR-0003 Ingestion Method](../adr/0003-ingestion-method.md)
+- [ADR-9999 Decision Backlog](../adr/9999-decision-backlog.md)
 - [watchdog Python project](https://github.com/gorakhargosh/watchdog)
-- [RAG ingestion API docs] (TBD)
+- RAG ingestion API docs (TODO)
 
 ---
 

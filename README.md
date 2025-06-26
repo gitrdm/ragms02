@@ -1,6 +1,10 @@
 # RAG LLM Interface Service & File-Watcher Sidecar
 
 ## Overview
+This project was created to experiment with implementing a project using a more formal, structured approach design methodology, including use of Architecture Decision Records (ADRs) and a System Design Document (SDD). The purpose for the more explicit methodology was to see if the more structured approach would enhance using an LLM as a coding assistant. Given the goals of the project, the source code is almost entirely LLM generated, with minimal human edits. As such, the code may not be fit for production use or suitable for any purpose, but serves as a proof of concept of using an LLM as the main contributor to a code base. 
+
+Use at your own risk.
+
 This project provides a local microservice and file-watcher sidecar for enhanced, context-aware LLM responses. It supports project/tag isolation, hybrid ingestion (full and incremental), robust API design, LLM routing, and is extensible for future multi-user or production scenarios.
 
 ## Key Features
