@@ -160,3 +160,85 @@ Or run the watcher directly from the command line:
 python src/ragms02/watcher/watcher.py
 ```
 This will watch the current directory (`./`) for changes. Edit the script or pass a different path to `WatcherConfig` to watch another directory.
+
+## Bulk Import / Recursive Directory Ingestion Example
+
+You can bulk import all files from a directory (and its subdirectories) into a project using the API. This is useful for onboarding an entire codebase or document set.
+
+**Python script example:**
+```python
+import os
+import requests
+
+API_URL = "http://localhost:8000/ingest/notify"
+PROJECT_ID = "example-project"
+ROOT_DIR = "./my_project"  # Change to your directory
+
+events = []
+for root, dirs, files in os.walk(ROOT_DIR):
+    for file in files:
+        rel_path = os.path.relpath(os.path.join(root, file), ROOT_DIR)
+        events.append({"path": rel_path, "event_type": "created"})
+
+payload = {
+    "project_id": PROJECT_ID,
+    "events": events
+}
+
+resp = requests.post(API_URL, json=payload)
+print("Bulk ingest status:", resp.status_code)
+print("Bulk ingest response:", resp.json())
+```
+
+**How it works:**
+- Recursively walks `ROOT_DIR`, collecting all files.
+- Sends a single `/ingest/notify` request with all file paths as events.
+- The backend reads, chunks, embeds, and stores all files for the given project.
+
+**Tip:** You can use this pattern to re-index or onboard any directory tree.
+
+**Note:** The bulk import example requires the `requests` library. If you don't have it installed, add it to your environment with:
+```bash
+poetry add requests
+# or
+pip install requests
+```
+
+## Ignore Patterns for Ingestion and File Watching
+
+This project supports robust, consistent file/directory exclusion for both the file watcher and bulk ingestion using a `.ragignore` file at the project root. The syntax is compatible with `.gitignore` and can be customized for your needs.
+
+### How to Use
+
+1. **Create/Edit `.ragignore`:**
+   - Start by copying your `.gitignore` to `.ragignore`.
+   - Add or remove patterns as needed (e.g., `examples/`, `*.log`).
+
+2. **Bulk Ingestion:**
+   - The `examples/bulk_ingest.py` script automatically loads `.ragignore` and skips ignored files/directories.
+
+3. **File Watcher:**
+   - The `examples/watch_with_ragignore.py` script demonstrates using the same ignore logic for real-time event filtering.
+
+4. **Custom Patterns:**
+   - Add any additional patterns to `.ragignore` to exclude them from both ingestion and watching.
+
+### Example `.ragignore`
+
+```
+examples/
+__pycache__/
+*.log
+*.tmp
+```
+
+### Implementation Details
+- Ignore logic is implemented in `examples/ignore_utils.py` using the `pathspec` library.
+- Both watcher and bulk ingest scripts should import and use this utility for consistent behavior.
+
+**Note:** Install `pathspec` if needed:
+```bash
+poetry add pathspec
+# or
+pip install pathspec
+```

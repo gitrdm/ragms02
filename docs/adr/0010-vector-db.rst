@@ -18,6 +18,17 @@ Decision
 - The database file path is configurable via the `RAGMS02_VECTOR_DB` environment variable, allowing persistent or in-memory operation.
 - LangChain is used for chunking, embedding, and retrieval orchestration.
 
+File/Directory Exclusion and Ignore Patterns
+---------------------------------------------
+
+The vector DB and ingestion system support robust exclusion of files and directories using a shared `.ragignore` file. This file uses `.gitignore`-style syntax and can be customized per project. The ignore logic is implemented using the `pathspec` library and a shared utility, ensuring that both real-time and batch ingestion respect the same patterns.
+
+- On startup, the watcher loads `.ragignore` and applies the patterns to all file system events.
+- Bulk ingestion scripts also load `.ragignore` and skip ignored files/directories during recursive scans.
+- Patterns can be customized to exclude any files, directories, or file types as needed.
+
+See `examples/ignore_utils.py` and `examples/watch_with_ragignore.py` for implementation details.
+
 Consequences
 ------------
 - Enables robust, recursive ingestion of directory structures and multi-project support.

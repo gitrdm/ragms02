@@ -1,0 +1,7 @@
+# .ragignore - Patterns for files/directories to exclude from RAGMS02 ingestion and watching
+# Start by copying your .gitignore, then customize as needed
+examples/
+__pycache__/
+*.log
+*.tmp
+# Add more patterns as needed

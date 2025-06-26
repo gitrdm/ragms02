@@ -566,3 +566,26 @@ These choices align with the ADRs and ensure the system is robust, extensible, a
   - A CONTRIBUTING.md file will provide detailed instructions for code style, documentation, testing, and the review process.
 
 These practices ensure code quality, maintainability, and a consistent developer experience.
+
+---
+
+## File/Directory Exclusion and Ignore Patterns
+
+The file-watcher sidecar and bulk ingestion scripts both support robust exclusion of files and directories using a shared `.ragignore` file. This file uses `.gitignore`-style syntax and can be customized per project. The ignore logic is implemented using the `pathspec` library and a shared utility, ensuring that both real-time and batch ingestion respect the same patterns.
+
+- **How it works:**
+  - On startup, the watcher loads `.ragignore` and applies the patterns to all file system events.
+  - Bulk ingestion scripts also load `.ragignore` and skip ignored files/directories during recursive scans.
+  - Patterns can be customized to exclude any files, directories, or file types as needed.
+
+- **Benefits:**
+  - Ensures consistent, robust exclusion across all ingestion methods.
+  - Reduces noise and unnecessary processing for files that should not be indexed.
+  - Familiar syntax for users (inherits from `.gitignore`).
+
+- **See also:**
+  - `examples/ignore_utils.py` for the shared ignore logic.
+  - `examples/watch_with_ragignore.py` for a watcher example using `.ragignore`.
+  - `examples/bulk_ingest.py` for a bulk ingestion example using `.ragignore`.
+
+---
